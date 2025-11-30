@@ -6,7 +6,6 @@
     <title>IEEE SL - Disaster Relief Transparency</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -16,14 +15,15 @@
     <style>
       body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; overflow-x: hidden; }
       
+      /* Scrollbar & Animations */
       .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
       .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
       .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
       .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
+      
       .reveal { opacity: 0; transform: translateY(30px); transition: all 1s cubic-bezier(0.5, 0, 0, 1); }
       .reveal.active { opacity: 1; transform: translateY(0); }
-
+      
       .delay-100 { transition-delay: 100ms; }
       .delay-200 { transition-delay: 200ms; }
       .delay-300 { transition-delay: 300ms; }
