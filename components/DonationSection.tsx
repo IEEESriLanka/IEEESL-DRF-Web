@@ -50,7 +50,7 @@ export const DonationSection: React.FC = () => {
                     <Phone className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-sm text-blue-300 font-bold uppercase mb-0.5">Upul</p>
+                    <p className="text-sm text-blue-300 font-bold uppercase mb-0.5">Kavinga Upul Ekanayaka</p>
                     <p className="font-mono text-lg font-medium text-white tracking-wide group-hover:text-blue-200 transition-colors">+94 71 648 7689</p>
                   </div>
                 </a>
@@ -60,7 +60,7 @@ export const DonationSection: React.FC = () => {
                     <Phone className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-sm text-blue-300 font-bold uppercase mb-0.5">Heshan</p>
+                    <p className="text-sm text-blue-300 font-bold uppercase mb-0.5">Heshan Mallawaarachchi</p>
                     <p className="font-mono text-lg font-medium text-white tracking-wide group-hover:text-blue-200 transition-colors">+94 71 246 2986</p>
                   </div>
                 </a>
