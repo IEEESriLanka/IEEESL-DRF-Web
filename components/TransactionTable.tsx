@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Transaction, TransactionType } from '../types';
-import { Search, ExternalLink, Download, ArrowUpRight, ArrowDownLeft, Filter, ChevronDown } from 'lucide-react';
+import { Search, ExternalLink, Download, ArrowUpRight, ArrowDownLeft, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Props {
   transactions: Transaction[];
@@ -17,10 +17,17 @@ const getCategoryColor = (category: string) => {
   return 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-slate-700 dark:text-gray-300 dark:border-slate-600';
 };
 
+const ITEMS_PER_PAGE = 10;
+
 export const TransactionTable: React.FC<Props> = React.memo(({ transactions }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
-  const [displayLimit, setDisplayLimit] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterType]);
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter(t => {
@@ -31,11 +38,16 @@ export const TransactionTable: React.FC<Props> = React.memo(({ transactions }) =
     });
   }, [transactions, searchTerm, filterType]);
 
-  const visibleTransactions = filteredTransactions.slice(0, displayLimit);
-  const hasMore = filteredTransactions.length > displayLimit;
+  const totalPages = Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const visibleTransactions = filteredTransactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-  const handleShowMore = () => {
-    setDisplayLimit(prev => prev + 10);
+  const handlePrevPage = () => {
+    setCurrentPage(prev => Math.max(prev - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage(prev => Math.min(prev + 1, totalPages));
   };
 
   const downloadCSV = () => {
@@ -122,7 +134,7 @@ export const TransactionTable: React.FC<Props> = React.memo(({ transactions }) =
             ].map(tab => (
                 <button 
                     key={tab.id}
-                    onClick={() => { setFilterType(tab.id); setDisplayLimit(10); }} 
+                    onClick={() => setFilterType(tab.id)} 
                     className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 whitespace-nowrap border ${getTabClass(tab.id)}`}
                 >
                     {tab.label}
@@ -136,11 +148,12 @@ export const TransactionTable: React.FC<Props> = React.memo(({ transactions }) =
             <table className="min-w-full divide-y divide-gray-100 dark:divide-slate-700">
               <thead>
                 <tr className="bg-gray-50/50 dark:bg-slate-900/50">
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Category</th>
-                  <th scope="col" className="px-6 py-4 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount (LKR)</th>
-                  <th scope="col" className="px-6 py-4 text-center text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Proof</th>
+                  {/* Added fixed widths to columns to prevent jumping layout when filtering */}
+                  <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider w-[15%]">Date</th>
+                  <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider w-[40%]">Description</th>
+                  <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider w-[15%]">Category</th>
+                  <th scope="col" className="px-6 py-4 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider w-[20%]">Amount (LKR)</th>
+                  <th scope="col" className="px-6 py-4 text-center text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider w-[10%]">Proof</th>
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-50 dark:divide-slate-700">
@@ -211,15 +224,36 @@ export const TransactionTable: React.FC<Props> = React.memo(({ transactions }) =
             </table>
           </div>
           
-          {hasMore && (
-              <div className="bg-gray-50 dark:bg-slate-800 p-4 border-t border-gray-100 dark:border-slate-700 flex justify-center">
-                  <button 
-                    onClick={handleShowMore}
-                    className="flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-[#00629B] dark:text-blue-400 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-full hover:bg-blue-50 dark:hover:bg-slate-600 hover:border-blue-200 dark:hover:border-slate-500 transition-all shadow-sm"
-                  >
-                    Show More Records
-                    <ChevronDown className="w-4 h-4" />
-                  </button>
+          {/* Pagination Controls */}
+          {filteredTransactions.length > 0 && (
+              <div className="bg-gray-50 dark:bg-slate-800 px-6 py-4 border-t border-gray-100 dark:border-slate-700 flex items-center justify-between">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    Showing <span className="font-medium text-gray-900 dark:text-white">{Math.min(filteredTransactions.length, startIndex + 1)}</span> to <span className="font-medium text-gray-900 dark:text-white">{Math.min(filteredTransactions.length, startIndex + ITEMS_PER_PAGE)}</span> of <span className="font-medium text-gray-900 dark:text-white">{filteredTransactions.length}</span> results
+                  </span>
+                  
+                  <div className="flex items-center gap-2">
+                      <button 
+                        onClick={handlePrevPage}
+                        disabled={currentPage === 1}
+                        className="p-2 rounded-full border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        aria-label="Previous Page"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-200 px-2">
+                        Page {currentPage} of {Math.max(1, totalPages)}
+                      </span>
+                      
+                      <button 
+                        onClick={handleNextPage}
+                        disabled={currentPage >= totalPages}
+                        className="p-2 rounded-full border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        aria-label="Next Page"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                  </div>
               </div>
           )}
         </div>

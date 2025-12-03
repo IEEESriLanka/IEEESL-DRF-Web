@@ -28,7 +28,7 @@ export const StatsCards: React.FC<Props> = React.memo(({ summary }) => {
           <div>
             <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Total Funds Raised</p>
             <p className="text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight font-heading">{formatCurrency(summary.totalCollected)}</p>
-            <p className="mt-3 text-sm text-green-600 dark:text-green-400 font-medium font-mono tracking-tight">100% Accounted For</p>
+            <p className="mt-3 text-sm text-green-600 dark:text-green-400 font-medium">100% Accounted For</p>
           </div>
         </div>
 
@@ -42,7 +42,7 @@ export const StatsCards: React.FC<Props> = React.memo(({ summary }) => {
           <div>
             <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Total Disbursed</p>
             <p className="text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight font-heading">{formatCurrency(summary.totalSpent)}</p>
-             <p className="mt-3 text-sm text-red-500 dark:text-red-400 font-medium flex items-center">
+             <p className="mt-3 text-sm text-red-500 dark:text-red-400 font-medium">
                  Verified Aid Delivered
              </p>
           </div>
