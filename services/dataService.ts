@@ -1,80 +1,80 @@
 import { Transaction, ImpactStory, TransactionType } from '../types';
 import { SHEET_TRANSACTIONS_URL, SHEET_IMPACT_URL } from '../constants';
 
-// Security: Validate URLs to prevent javascript: XSS attacks
-const isValidUrl = (urlString: string): boolean => {
-  if (!urlString) return false;
-  try {
-    const url = new URL(urlString);
-    return url.protocol === "http:" || url.protocol === "https:";
-  } catch (e) {
-    return false;
-  }
-};
-
-// Helper to check if string is an iframe embed code
-const isIframeString = (str: string): boolean => {
-  return typeof str === 'string' && str.trim().startsWith('<iframe') && str.includes('src="');
-};
-
-// Helper to parse CSV string to JSON
-const parseCSV = (csvText: string) => {
-  if (!csvText || typeof csvText !== 'string') return [];
+const parseCSV = (text: string) => {
+  const lines = text.split('\n').filter(line => line.trim() !== '');
+  if (lines.length === 0) return [];
   
-  const lines = csvText.split('\n');
-  if (lines.length < 2) return []; // Need at least headers and one row
-
-  const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
   
-  // Safety Check
-  if (!headers.includes('Date') && !headers.includes('date')) {
-      console.warn('Invalid CSV format detected. Check your Google Sheet URL.');
-      return [];
-  }
-  
-  const result = [];
-  
-  for (let i = 1; i < lines.length; i++) {
-    if (!lines[i].trim()) continue;
+  return lines.slice(1).map(line => {
+    const values = [];
+    let inQuote = false;
+    let currentValue = '';
     
-    // Handle commas inside quotes
-    const currentLine = lines[i].match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g) || lines[i].split(',');
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"') {
+        inQuote = !inQuote;
+      } else if (char === ',' && !inQuote) {
+        values.push(currentValue.trim().replace(/^"|"$/g, ''));
+        currentValue = '';
+      } else {
+        currentValue += char;
+      }
+    }
+    values.push(currentValue.trim().replace(/^"|"$/g, ''));
+    
+    return headers.reduce((obj, header, index) => {
+      obj[header] = values[index];
+      return obj;
+    }, {} as any);
+  });
+};
 
-    const obj: any = {};
-    headers.forEach((header, index) => {
-        let val = currentLine[index] ? currentLine[index].trim() : '';
-        val = val.replace(/^"|"$/g, ''); // Remove quotes
-        obj[header] = val;
-    });
-    result.push(obj);
+// Security: Validate URLs to prevent XSS and fix common formatting issues
+const validateUrl = (url: string, allowIframe = false): string | undefined => {
+  if (!url) return undefined;
+  
+  // Allow iframe src strings if explicitly allowed (for YouTube embeds)
+  if (allowIframe && url.includes('<iframe') && url.includes('src="')) {
+     return url; // ImpactFeed component handles parsing
   }
-  return result;
+
+  let validUrl = url.trim();
+  
+  // Auto-prepend https:// if missing protocol
+  if (!/^https?:\/\//i.test(validUrl)) {
+    validUrl = 'https://' + validUrl;
+  }
+
+  try {
+    const parsed = new URL(validUrl);
+    // Ensure protocol is http or https
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+      return validUrl;
+    }
+  } catch (e) {
+    // Invalid URL structure
+  }
+  return undefined;
 };
 
 export const fetchTransactions = async (): Promise<Transaction[]> => {
   try {
-    if (!SHEET_TRANSACTIONS_URL) return [];
-
     const response = await fetch(SHEET_TRANSACTIONS_URL);
-    if (!response.ok) throw new Error('Network response was not ok');
-    
     const text = await response.text();
     const data = parseCSV(text);
     
-    return data.map((row: any, index: number) => {
-      // Sanitize inputs
-      const proofLink = row.ProofLink && isValidUrl(row.ProofLink) ? row.ProofLink : undefined;
-      
-      return {
-        id: `trans-${index}`,
-        date: row.Date || '',
-        description: row.Description || '',
-        category: row.Category || 'General',
-        amount: parseFloat(row.Amount ? row.Amount.replace(/,/g, '') : '0') || 0,
-        type: row.Type === 'Credit' ? TransactionType.CREDIT : TransactionType.DEBIT,
-        proofLink: proofLink
-      };
-    });
+    return data.map((row: any, index: number) => ({
+      id: `trans-${index}`,
+      date: row['Date'] || '',
+      description: row['Description'] || '',
+      category: row['Category'] || 'General',
+      amount: parseFloat((row['Amount'] || '0').replace(/[^0-9.-]+/g, '')),
+      type: (row['Type'] === 'Credit' || row['Type'] === 'Incoming') ? TransactionType.CREDIT : TransactionType.DEBIT,
+      proofLink: validateUrl(row['Proof'] || row['Link'])
+    })).filter((t: Transaction) => t.date && !isNaN(t.amount));
   } catch (error) {
     console.error("Failed to fetch transactions", error);
     return [];
@@ -83,36 +83,20 @@ export const fetchTransactions = async (): Promise<Transaction[]> => {
 
 export const fetchImpactStories = async (): Promise<ImpactStory[]> => {
   try {
-    if (!SHEET_IMPACT_URL) return [];
-
     const response = await fetch(SHEET_IMPACT_URL);
-    if (!response.ok) throw new Error('Network response was not ok');
-
     const text = await response.text();
     const data = parseCSV(text);
     
-    return data.map((row: any, index: number) => {
-      // Sanitize inputs: Allow valid URLs OR iframe embed strings
-      let imageUrl = undefined;
-      const rawImageInput = row.ImageUrl || '';
-      
-      if (isValidUrl(rawImageInput)) {
-        imageUrl = rawImageInput;
-      } else if (isIframeString(rawImageInput)) {
-        // Allow iframe strings to pass through; they will be parsed by the component
-        imageUrl = rawImageInput;
-      }
-
-      return {
-        id: `story-${index}`,
-        date: row.Date || '',
-        title: row.Title || '',
-        description: row.Description || '',
-        imageUrl: imageUrl
-      };
-    });
+    return data.map((row: any, index: number) => ({
+      id: `story-${index}`,
+      date: row['Date'] || '',
+      title: row['Title'] || '',
+      description: row['Description'] || '',
+      // Added row['ImageUrl'] to the check list
+      imageUrl: validateUrl(row['ImageUrl'] || row['Image'] || row['Media'], true)
+    })).filter((s: ImpactStory) => s.title);
   } catch (error) {
-    console.error("Failed to fetch impact stories", error);
+    console.error("Failed to fetch stories", error);
     return [];
   }
 };

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { ImpactStory } from '../types';
 import { Calendar, Heart, Play, ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react';
 
@@ -7,7 +7,8 @@ interface Props {
 }
 
 const StoryCard = React.memo<{ story: ImpactStory, index: number }>(({ story, index }) => {
-  const [imageError, setImageError] = useState(false);
+  const [imgSrc, setImgSrc] = useState<string>('');
+  const [hasError, setHasError] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   
@@ -24,6 +25,7 @@ const StoryCard = React.memo<{ story: ImpactStory, index: number }>(({ story, in
         }
     }
 
+    // Regex to capture ID from various YouTube URL formats
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url.match(regExp);
     return (match && match[2].length === 11) ? match[2] : null;
@@ -33,8 +35,7 @@ const StoryCard = React.memo<{ story: ImpactStory, index: number }>(({ story, in
   const processImageUrl = (url: string | undefined) => {
     if (!url) return undefined;
 
-    // Fix for freeimage.host viewer links (e.g. https://freeimage.host/i/fzLzLQe)
-    // Converts to likely direct URL: https://iili.io/fzLzLQe.jpg
+    // Fix for freeimage.host viewer links
     if (url.includes('freeimage.host/i/')) {
         const parts = url.split('/').filter(Boolean);
         const id = parts[parts.length - 1];
@@ -46,13 +47,26 @@ const StoryCard = React.memo<{ story: ImpactStory, index: number }>(({ story, in
 
   const videoId = getYouTubeId(story.imageUrl || '');
   const isVideo = !!videoId;
-  
-  // Use YouTube max res thumbnail if video, otherwise use processed URL
-  const displayImageUrl = isVideo 
-    ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`
-    : processImageUrl(story.imageUrl);
-    
-  const hasValidImage = displayImageUrl && !imageError;
+
+  // Initialize image source
+  useEffect(() => {
+    setHasError(false);
+    if (videoId) {
+        // Try max resolution first
+        setImgSrc(`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`);
+    } else {
+        setImgSrc(processImageUrl(story.imageUrl) || '');
+    }
+  }, [story.imageUrl, videoId]);
+
+  const handleImageError = () => {
+    if (videoId && imgSrc.includes('maxresdefault')) {
+        // Fallback to HQ thumbnail if Max Res doesn't exist
+        setImgSrc(`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`);
+    } else {
+        setHasError(true);
+    }
+  };
 
   const handlePlay = (e: React.MouseEvent) => {
       e.stopPropagation();
@@ -60,13 +74,14 @@ const StoryCard = React.memo<{ story: ImpactStory, index: number }>(({ story, in
   };
 
   const description = story.description || '';
-  const shouldTruncate = description.length > 150;
+  const shouldTruncate = description.length > 150; // Increased truncation threshold
 
   return (
      <div 
-        className="flex-none w-[90vw] md:w-[400px] snap-center flex flex-col bg-white dark:bg-slate-800 rounded-3xl overflow-hidden shadow-lg shadow-gray-200/50 dark:shadow-black/30 hover:shadow-2xl hover:shadow-blue-500/10 dark:hover:shadow-blue-900/10 transition-all duration-500 group border border-gray-100 dark:border-slate-700"
+        className={`flex-none w-[90vw] md:w-[480px] snap-center flex flex-col bg-white dark:bg-slate-800 rounded-3xl overflow-hidden shadow-lg shadow-gray-200/50 dark:shadow-black/30 hover:shadow-2xl hover:shadow-blue-500/10 dark:hover:shadow-blue-900/10 transition-all duration-500 group border border-gray-100 dark:border-slate-700 relative ${isExpanded ? 'h-auto' : 'h-[560px]'}`}
      >
-        <div className="h-64 w-full overflow-hidden bg-gray-100 dark:bg-slate-900 relative flex-shrink-0">
+        {/* Media Container - Aspect Ratio 16:9 to match YouTube/HD standards */}
+        <div className="aspect-video w-full overflow-hidden bg-gray-100 dark:bg-slate-900 relative flex-shrink-0">
           {isPlaying && videoId ? (
              <iframe
                 width="100%"
@@ -79,14 +94,14 @@ const StoryCard = React.memo<{ story: ImpactStory, index: number }>(({ story, in
                 allowFullScreen
                 className="absolute inset-0 w-full h-full"
              ></iframe>
-          ) : hasValidImage ? (
+          ) : !hasError && imgSrc ? (
             <>
                 <img 
-                  src={displayImageUrl} 
+                  src={imgSrc} 
                   alt={story.title} 
                   className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700" 
                   loading="lazy"
-                  onError={() => setImageError(true)}
+                  onError={handleImageError}
                 />
                 {isVideo && (
                     <div 
@@ -118,28 +133,32 @@ const StoryCard = React.memo<{ story: ImpactStory, index: number }>(({ story, in
           )}
         </div>
 
-        <div className="p-8 flex flex-col flex-grow bg-white dark:bg-slate-800">
-            <div className="flex items-center text-xs font-bold text-[#00629B] dark:text-blue-400 uppercase tracking-wider mb-4 bg-blue-50 dark:bg-blue-900/20 inline-flex self-start px-3 py-1 rounded-full">
+        <div className="p-6 flex flex-col flex-grow min-h-0 bg-white dark:bg-slate-800">
+            <div className="flex-none flex items-center text-xs font-bold text-[#00629B] dark:text-blue-400 uppercase tracking-wider mb-3 bg-blue-50 dark:bg-blue-900/20 inline-flex self-start px-3 py-1 rounded-full">
                 <Calendar className="w-3 h-3 mr-2" />
                 {story.date}
             </div>
-            {/* Title: Full subject, no line-clamp */}
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 leading-snug group-hover:text-[#00629B] dark:group-hover:text-blue-400 transition-colors font-heading">
+            
+            {/* Title: Full subject, no truncation. Flex-none. */}
+            <h3 className="flex-none text-xl font-bold text-gray-900 dark:text-white mb-3 leading-snug group-hover:text-[#00629B] dark:group-hover:text-blue-400 transition-colors font-heading">
                 {story.title}
             </h3>
             
-            <p className={`text-gray-500 dark:text-gray-400 leading-relaxed text-sm transition-all duration-300 ${isExpanded ? '' : 'line-clamp-3'}`}>
-                {description}
-            </p>
+            {/* Description: Fills space or expands. */}
+            <div className="flex-1 relative">
+                <p className={`text-gray-500 dark:text-gray-400 leading-relaxed text-sm pr-1 transition-all duration-300 ${isExpanded ? '' : 'line-clamp-4'}`}>
+                    {description}
+                </p>
+            </div>
 
-            <div className="mt-auto pt-4">
+            <div className="flex-none mt-3 pt-2 border-t border-gray-100 dark:border-slate-700/50">
               {shouldTruncate && (
                   <button 
                       onClick={(e) => {
                           e.stopPropagation();
                           setIsExpanded(!isExpanded);
                       }}
-                      className="text-xs font-bold uppercase tracking-wider text-[#00629B] dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors focus:outline-none flex items-center gap-1"
+                      className="text-xs font-bold uppercase tracking-wider text-[#00629B] dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors focus:outline-none flex items-center gap-1 py-1"
                   >
                       {isExpanded ? 'Show Less' : 'Read Full Story'}
                   </button>
@@ -152,6 +171,7 @@ const StoryCard = React.memo<{ story: ImpactStory, index: number }>(({ story, in
 
 export const ImpactFeed: React.FC<Props> = React.memo(({ stories }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [isPaused, setIsPaused] = useState(false);
 
   // Sort by Date Descending
   const sortedStories = useMemo(() => {
@@ -160,18 +180,43 @@ export const ImpactFeed: React.FC<Props> = React.memo(({ stories }) => {
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollContainerRef.current) {
-      // Scroll by approximately the width of a card + gap
-      const scrollAmount = 424; 
-      const newScrollLeft = direction === 'left' 
-        ? scrollContainerRef.current.scrollLeft - scrollAmount 
-        : scrollContainerRef.current.scrollLeft + scrollAmount;
+      const container = scrollContainerRef.current;
+      // Calculate scroll amount based on card width (480px + 24px gap)
+      // We read the actual card width if possible or fallback to 504
+      const cardWidth = container.children[0]?.clientWidth || 480;
+      const gap = 24;
+      const scrollAmount = cardWidth + gap;
       
-      scrollContainerRef.current.scrollTo({
+      let newScrollLeft;
+
+      if (direction === 'left') {
+        newScrollLeft = container.scrollLeft - scrollAmount;
+      } else {
+        // Check if we are near the end
+        if (container.scrollLeft + container.clientWidth >= container.scrollWidth - 10) {
+           newScrollLeft = 0; // Loop back to start
+        } else {
+           newScrollLeft = container.scrollLeft + scrollAmount;
+        }
+      }
+      
+      container.scrollTo({
         left: newScrollLeft,
         behavior: 'smooth'
       });
     }
   };
+
+  // Auto-scroll logic
+  useEffect(() => {
+    if (stories.length === 0 || isPaused) return;
+
+    const interval = setInterval(() => {
+      scroll('right');
+    }, 4000); // Auto-scroll every 4 seconds
+
+    return () => clearInterval(interval);
+  }, [stories, isPaused]);
 
   if (stories.length === 0) return null;
 
@@ -206,11 +251,13 @@ export const ImpactFeed: React.FC<Props> = React.memo(({ stories }) => {
             </div>
         </div>
 
-        {/* Carousel Container */}
+        {/* Carousel Container - items-start allows expansion without stretching siblings */}
         <div 
             ref={scrollContainerRef}
-            className="flex gap-6 overflow-x-auto pb-8 snap-x snap-mandatory hide-scrollbar custom-scrollbar items-stretch"
+            className="flex gap-6 overflow-x-auto pb-12 snap-x snap-mandatory hide-scrollbar custom-scrollbar items-start"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
         >
            {sortedStories.map((story, index) => (
              <StoryCard key={story.id} story={story} index={index} />

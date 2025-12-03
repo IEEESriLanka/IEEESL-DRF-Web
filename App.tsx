@@ -169,13 +169,13 @@ function App() {
   }
 
   return (
-    <div className={`min-h-screen font-sans relative transition-colors duration-500 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+    <div className={`min-h-screen font-sans relative flex flex-col transition-colors duration-500 ${isDark ? 'text-white' : 'text-gray-900'}`}>
       <GlobalBackground isDark={isDark} />
       
       {/* Content Container - Ensure z-index is above background */}
-      <div className="relative z-10">
+      <div className="relative z-10 flex flex-col flex-grow w-full">
         <Header isDark={isDark} toggleTheme={toggleTheme} />
-        <main>
+        <main className="flex-grow w-full">
           <Hero />
           <DonationSection />
           <StatsCards summary={summary} />
@@ -184,7 +184,7 @@ function App() {
           <ImpactFeed stories={stories} />
         </main>
         
-        <footer className="bg-[#0B1120] text-gray-400 py-12 text-sm reveal border-t border-gray-800 relative z-20">
+        <footer className="bg-[#0B1120] text-gray-400 py-12 text-sm border-t border-gray-800 relative z-20 w-full">
            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
                  <div className="text-center md:text-left">

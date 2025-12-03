@@ -12,10 +12,11 @@ export const Header: React.FC<Props> = React.memo(({ isDark, toggleTheme }) => {
   return (
     <>
     <header className="fixed top-4 left-0 right-0 z-50 transition-all duration-300 px-4">
-      <div className={`max-w-7xl mx-auto backdrop-blur-xl border shadow-xl rounded-full px-6 sm:px-8 py-3 flex justify-between items-center relative transition-colors duration-300 ${
+      {/* Liquid Frosted Glass Container */}
+      <div className={`max-w-7xl mx-auto backdrop-blur-2xl border rounded-full px-6 sm:px-8 py-3 flex justify-between items-center relative transition-all duration-500 ${
         isDark 
-          ? 'bg-[#0f172a]/90 border-slate-700 shadow-black/20' 
-          : 'bg-white/90 border-white/20 shadow-blue-900/5'
+          ? 'bg-slate-900/60 border-white/10 shadow-2xl shadow-black/20 ring-1 ring-white/5 supports-[backdrop-filter]:bg-slate-900/50' 
+          : 'bg-white/70 border-white/40 shadow-xl shadow-blue-900/5 ring-1 ring-white/60 supports-[backdrop-filter]:bg-white/60'
       }`}>
           
           <div className="flex items-center gap-4">
@@ -29,22 +30,22 @@ export const Header: React.FC<Props> = React.memo(({ isDark, toggleTheme }) => {
                 <a 
                     key={item} 
                     href={`#${item.toLowerCase()}`} 
-                    className={`px-4 py-2 text-sm font-medium rounded-full transition-all ${
+                    className={`px-4 py-2 text-sm font-medium rounded-full transition-all duration-300 ${
                         isDark 
-                          ? 'text-gray-300 hover:text-white hover:bg-slate-800' 
-                          : 'text-gray-600 hover:text-[#00629B] hover:bg-blue-50/50'
+                          ? 'text-gray-300 hover:text-white hover:bg-white/10' 
+                          : 'text-gray-600 hover:text-[#00629B] hover:bg-white/50'
                     }`}
                 >
                     {item}
                 </a>
             ))}
             
-            <div className={`w-px h-6 mx-2 ${isDark ? 'bg-slate-700' : 'bg-gray-200'}`}></div>
+            <div className={`w-px h-6 mx-2 ${isDark ? 'bg-white/10' : 'bg-black/5'}`}></div>
             
             <button 
               onClick={toggleTheme}
-              className={`p-2 rounded-full transition-colors ${
-                isDark ? 'text-yellow-400 hover:bg-slate-800' : 'text-gray-600 hover:bg-gray-100 hover:text-[#00629B]'
+              className={`p-2 rounded-full transition-all duration-300 ${
+                isDark ? 'text-yellow-400 hover:bg-white/10' : 'text-gray-600 hover:bg-white/50 hover:text-[#00629B]'
               }`}
               title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
             >
@@ -53,7 +54,7 @@ export const Header: React.FC<Props> = React.memo(({ isDark, toggleTheme }) => {
 
             <a 
               href="#donate"
-              className="ml-2 inline-flex items-center px-6 py-2.5 text-sm font-bold rounded-full shadow-lg text-white bg-red-600 hover:bg-red-700 hover:shadow-red-500/20 transition-all transform hover:-translate-y-0.5 animate-heartbeat"
+              className="ml-2 inline-flex items-center px-6 py-2.5 text-sm font-bold rounded-full shadow-lg shadow-red-600/20 text-white bg-red-600 hover:bg-red-700 hover:shadow-red-500/30 transition-all transform hover:-translate-y-0.5 animate-heartbeat backdrop-blur-sm"
             >
               Donate Now
               <Heart className="w-4 h-4 ml-2 fill-current" />
@@ -72,7 +73,7 @@ export const Header: React.FC<Props> = React.memo(({ isDark, toggleTheme }) => {
             <button 
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className={`inline-flex items-center justify-center p-2 rounded-full focus:outline-none transition-colors ${
-                  isDark ? 'text-gray-300 hover:bg-slate-800' : 'text-gray-600 hover:bg-gray-100'
+                  isDark ? 'text-gray-300 hover:bg-white/10' : 'text-gray-600 hover:bg-white/50'
               }`}
             >
               {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -80,10 +81,10 @@ export const Header: React.FC<Props> = React.memo(({ isDark, toggleTheme }) => {
           </div>
       </div>
 
-      {/* Mobile Menu Dropdown */}
+      {/* Mobile Menu Dropdown - Matches Glass Aesthetic */}
       {isMenuOpen && (
-        <div className={`md:hidden absolute top-full left-4 right-4 mt-2 backdrop-blur-xl border rounded-2xl shadow-2xl animate-in slide-in-from-top-5 duration-200 overflow-hidden ${
-            isDark ? 'bg-[#0f172a]/95 border-slate-700' : 'bg-white/95 border-gray-100'
+        <div className={`md:hidden absolute top-full left-4 right-4 mt-2 backdrop-blur-2xl border rounded-3xl shadow-2xl animate-in slide-in-from-top-5 duration-200 overflow-hidden ${
+            isDark ? 'bg-slate-900/80 border-white/10 ring-1 ring-white/5' : 'bg-white/80 border-white/40 ring-1 ring-white/50'
         }`}>
            <div className="px-4 pt-4 pb-6 space-y-1">
              {['Summary', 'Breakdown', 'Ledger', 'Impact'].map((item) => (
@@ -93,18 +94,18 @@ export const Header: React.FC<Props> = React.memo(({ isDark, toggleTheme }) => {
                     onClick={() => setIsMenuOpen(false)} 
                     className={`block px-4 py-3 rounded-xl text-base font-medium ${
                         isDark 
-                          ? 'text-gray-300 hover:text-white hover:bg-slate-800' 
-                          : 'text-gray-700 hover:text-[#00629B] hover:bg-blue-50'
+                          ? 'text-gray-300 hover:text-white hover:bg-white/10' 
+                          : 'text-gray-700 hover:text-[#00629B] hover:bg-white/50'
                     }`}
                 >
                     {item}
                 </a>
              ))}
-             <div className={`pt-4 mt-2 border-t ${isDark ? 'border-slate-700' : 'border-gray-100'}`}>
+             <div className={`pt-4 mt-2 border-t ${isDark ? 'border-white/10' : 'border-black/5'}`}>
                <a 
                  href="#donate" 
                  onClick={() => setIsMenuOpen(false)}
-                 className="flex items-center justify-center w-full px-5 py-3 text-base font-bold rounded-xl shadow-md text-white bg-red-600 hover:bg-red-700 animate-heartbeat"
+                 className="flex items-center justify-center w-full px-5 py-3 text-base font-bold rounded-xl shadow-lg shadow-red-600/20 text-white bg-red-600 hover:bg-red-700 animate-heartbeat"
                >
                  Donate Now
                  <Heart className="w-4 h-4 ml-2 fill-current" />
