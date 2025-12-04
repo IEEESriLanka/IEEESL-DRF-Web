@@ -4,7 +4,7 @@
   <img src="public/logo.png" alt="IEEE Sri Lanka Section Logo" height="80" />
   <h3>Transparency. Integrity. Impact.</h3>
   <p>The official transparency and utilization dashboard for the IEEE Sri Lanka Section Disaster Relief Fund.</p>
-  <p><a href="https://drf.ieee.lk"><strong>Visit Live Site</strong></a></p>
+  <p><a href="https://aid.ieee.lk"><strong>Visit Live Site</strong></a></p>
 </div>
 
 ---
