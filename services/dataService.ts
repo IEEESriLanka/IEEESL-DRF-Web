@@ -73,7 +73,8 @@ export const fetchTransactions = async (): Promise<Transaction[]> => {
       category: row['Category'] || 'General',
       amount: parseFloat((row['Amount'] || '0').replace(/[^0-9.-]+/g, '')),
       type: (row['Type'] === 'Credit' || row['Type'] === 'Incoming') ? TransactionType.CREDIT : TransactionType.DEBIT,
-      proofLink: validateUrl(row['Proof'] || row['Link'])
+      // Enhanced check for various proof column names
+      proofLink: validateUrl(row['Proof'] || row['Link'] || row['Receipt'] || row['ProofLink'] || row['Proof Link'] || row['Url'] || row['URL'])
     })).filter((t: Transaction) => t.date && !isNaN(t.amount));
   } catch (error) {
     console.error("Failed to fetch transactions", error);
