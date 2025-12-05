@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { ImpactStory } from '../types';
 import { Calendar, Heart, Play, Image as ImageIcon, ArrowRight, ChevronUp, ChevronDown } from 'lucide-react';
 
@@ -161,10 +161,13 @@ const StoryCard = React.memo<{ story: ImpactStory, index: number, forceExpanded?
 });
 
 export const ImpactFeed: React.FC<Props> = React.memo(({ stories, forceExpanded = false }) => {
-  const [isAllVisible, setIsAllVisible] = useState(false);
+  const [isDesktopExpanded, setIsDesktopExpanded] = useState(false);
+  const [isMobileAllVisible, setIsMobileAllVisible] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [isPaused, setIsPaused] = useState(false);
 
   // If forceExpanded is true (Campaign Page), we are always "visible"
-  const isVisibleState = forceExpanded || isAllVisible;
+  const isVisibleState = forceExpanded || isDesktopExpanded;
 
   const sortedStories = useMemo(() => {
     return [...stories].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -174,18 +177,41 @@ export const ImpactFeed: React.FC<Props> = React.memo(({ stories, forceExpanded 
 
   // Layout Logic:
   const visibleCount = 5;
-  const showExpandCard = !isVisibleState && sortedStories.length > visibleCount;
-  
-  // If visible, show all. If not, show first 5.
   const displayedStories = isVisibleState ? sortedStories : sortedStories.slice(0, visibleCount);
+  
+  // Mobile Auto-Scroll Logic
+  useEffect(() => {
+    // Only auto-scroll if we are in carousel mode (not "View All")
+    if (isMobileAllVisible || !scrollContainerRef.current || forceExpanded) return;
+
+    const scrollContainer = scrollContainerRef.current;
+    
+    const interval = setInterval(() => {
+        if (isPaused) return;
+
+        // Calculate card width + gap. Assuming roughly 85vw + gap
+        const scrollAmount = scrollContainer.clientWidth * 0.85; 
+        const maxScroll = scrollContainer.scrollWidth - scrollContainer.clientWidth;
+        
+        if (scrollContainer.scrollLeft >= maxScroll - 10) {
+            // Loop back to start smoothly
+            scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+            scrollContainer.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        }
+    }, 4000); // Scroll every 4 seconds
+
+    return () => clearInterval(interval);
+  }, [isMobileAllVisible, isPaused, forceExpanded]);
+
 
   return (
     <div id="impact" className="py-24 transition-colors duration-500 bg-transparent border-t-0 border-transparent relative z-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Header - Only show on Homepage/Default mode. Campaign page has its own header. */}
+        {/* Header */}
         {!forceExpanded && (
-            <div className="flex flex-col md:flex-row justify-between items-end mb-12 reveal">
+            <div className="flex flex-col md:flex-row justify-between items-end mb-8 md:mb-12 reveal">
                 <div className="max-w-3xl">
                     <div className="inline-block p-3 rounded-2xl bg-blue-50 dark:bg-blue-900/20 mb-4">
                         <Heart className="w-8 h-8 text-[#00629B] dark:text-blue-400 fill-current" />
@@ -204,56 +230,124 @@ export const ImpactFeed: React.FC<Props> = React.memo(({ stories, forceExpanded 
             </div>
         )}
 
-        {/* Grid Layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
-           {displayedStories.map((story, index) => {
-             const animationClass = (isVisibleState && index >= visibleCount) 
-                ? 'animate-appear' 
-                : 'reveal delay-100';
-
-             return (
-               <div key={story.id} className={`h-full ${animationClass}`}>
-                  <StoryCard story={story} index={index} />
-               </div>
-             );
-           })}
-
-           {/* "See More" Card - Only if not expanded */}
-           {showExpandCard && (
-             <button
-               onClick={() => setIsAllVisible(true)}
-               className="group relative flex flex-col items-center justify-center h-full min-h-[400px] rounded-3xl bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border-2 border-dashed border-gray-300 dark:border-slate-700 hover:border-[#00629B] dark:hover:border-blue-400 transition-all duration-300 overflow-hidden shadow-sm hover:shadow-xl animate-appear w-full"
-             >
-                <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-white dark:from-slate-800 dark:to-slate-900 opacity-50 group-hover:opacity-100 transition-opacity"></div>
-                <div className="relative z-10 flex flex-col items-center p-8 text-center">
-                   <div className="w-20 h-20 rounded-full bg-[#00629B]/10 dark:bg-blue-400/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                      <ArrowRight className="w-8 h-8 text-[#00629B] dark:text-blue-400" />
-                   </div>
-                   <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 font-heading">
-                     View All Updates
-                   </h3>
-                   <p className="text-gray-500 dark:text-gray-400">
-                     Read {sortedStories.length - visibleCount} more stories about our relief efforts.
-                   </p>
+        {/* --- MOBILE LAYOUT (< md) --- */}
+        <div className="md:hidden">
+            {!isMobileAllVisible ? (
+                // Carousel Mode
+                <div 
+                    className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-8 no-scrollbar -mx-4 px-4"
+                    ref={scrollContainerRef}
+                    onTouchStart={() => setIsPaused(true)}
+                    onTouchEnd={() => setTimeout(() => setIsPaused(false), 3000)}
+                >
+                    {sortedStories.slice(0, 5).map((story, index) => (
+                        <div key={story.id} className="min-w-[85vw] snap-center h-full">
+                            <StoryCard story={story} index={index} />
+                        </div>
+                    ))}
+                    
+                    {/* View All Card in Carousel */}
+                    {sortedStories.length > 5 && (
+                        <div className="min-w-[50vw] snap-center h-full flex items-center">
+                            <button
+                                onClick={() => setIsMobileAllVisible(true)}
+                                className="w-full h-[300px] rounded-3xl bg-white/50 dark:bg-slate-800/50 border-2 border-dashed border-gray-300 dark:border-slate-700 flex flex-col items-center justify-center text-center p-6"
+                            >
+                                <div className="w-12 h-12 rounded-full bg-[#00629B]/10 flex items-center justify-center mb-4">
+                                    <ArrowRight className="w-6 h-6 text-[#00629B]" />
+                                </div>
+                                <span className="font-bold text-[#00629B]">View All Updates</span>
+                            </button>
+                        </div>
+                    )}
                 </div>
-             </button>
-           )}
+            ) : (
+                // Vertical Stack Mode (View All)
+                <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    {sortedStories.map((story, index) => (
+                        <div key={story.id} className="animate-appear">
+                            <StoryCard story={story} index={index} />
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Mobile Toggle Button Area */}
+            <div className="mt-6 text-center">
+                {!isMobileAllVisible ? (
+                    <button 
+                        onClick={() => setIsMobileAllVisible(true)}
+                        className="inline-flex items-center px-6 py-3 rounded-full bg-[#00629B] text-white font-bold text-sm shadow-lg shadow-blue-500/20"
+                    >
+                        View All Updates <ArrowRight className="w-4 h-4 ml-2" />
+                    </button>
+                ) : (
+                    <button 
+                        onClick={() => {
+                            setIsMobileAllVisible(false);
+                            // Scroll back to top of section
+                            document.getElementById('impact')?.scrollIntoView({ behavior: 'smooth' });
+                        }}
+                        className="inline-flex items-center px-6 py-3 rounded-full bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-200 font-bold text-sm border border-gray-200 dark:border-slate-700"
+                    >
+                        Show Less <ChevronUp className="w-4 h-4 ml-2" />
+                    </button>
+                )}
+            </div>
         </div>
 
-        {/* Collapse Button - Only show if we expanded manually (NOT forced mode) */}
-        {!forceExpanded && isAllVisible && sortedStories.length > visibleCount && (
-            <div className="mt-12 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <button 
-                    onClick={() => {
-                        setIsAllVisible(false);
-                        document.getElementById('impact')?.scrollIntoView({ behavior: 'smooth' });
-                    }}
-                    className="inline-flex items-center px-8 py-3 rounded-full bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-200 font-bold text-sm shadow-md hover:shadow-lg border border-gray-200 dark:border-slate-700 hover:text-[#00629B] dark:hover:text-blue-400 transition-all"
+        {/* --- DESKTOP LAYOUT (>= md) --- */}
+        <div className="hidden md:block">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
+            {displayedStories.map((story, index) => {
+                const animationClass = (isVisibleState && index >= visibleCount) 
+                    ? 'animate-appear' 
+                    : 'reveal delay-100';
+
+                return (
+                <div key={story.id} className={`h-full ${animationClass}`}>
+                    <StoryCard story={story} index={index} />
+                </div>
+                );
+            })}
+
+            {/* "See More" Card - Only if not expanded */}
+            {!forceExpanded && !isDesktopExpanded && sortedStories.length > visibleCount && (
+                <button
+                onClick={() => setIsDesktopExpanded(true)}
+                className="group relative flex flex-col items-center justify-center h-full min-h-[400px] rounded-3xl bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border-2 border-dashed border-gray-300 dark:border-slate-700 hover:border-[#00629B] dark:hover:border-blue-400 transition-all duration-300 overflow-hidden shadow-sm hover:shadow-xl animate-appear w-full"
                 >
-                    Show Less <ChevronUp className="w-4 h-4 ml-2" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-white dark:from-slate-800 dark:to-slate-900 opacity-50 group-hover:opacity-100 transition-opacity"></div>
+                    <div className="relative z-10 flex flex-col items-center p-8 text-center">
+                    <div className="w-20 h-20 rounded-full bg-[#00629B]/10 dark:bg-blue-400/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                        <ArrowRight className="w-8 h-8 text-[#00629B] dark:text-blue-400" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 font-heading">
+                        View All Updates
+                    </h3>
+                    <p className="text-gray-500 dark:text-gray-400">
+                        Read {sortedStories.length - visibleCount} more stories about our relief efforts.
+                    </p>
+                    </div>
                 </button>
+            )}
             </div>
-        )}
+
+            {/* Collapse Button - Only show if we expanded manually */}
+            {!forceExpanded && isDesktopExpanded && sortedStories.length > visibleCount && (
+                <div className="mt-12 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <button 
+                        onClick={() => {
+                            setIsDesktopExpanded(false);
+                            document.getElementById('impact')?.scrollIntoView({ behavior: 'smooth' });
+                        }}
+                        className="inline-flex items-center px-8 py-3 rounded-full bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-200 font-bold text-sm shadow-md hover:shadow-lg border border-gray-200 dark:border-slate-700 hover:text-[#00629B] dark:hover:text-blue-400 transition-all"
+                    >
+                        Show Less <ChevronUp className="w-4 h-4 ml-2" />
+                    </button>
+                </div>
+            )}
+        </div>
 
       </div>
     </div>
