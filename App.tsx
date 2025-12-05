@@ -11,6 +11,8 @@ import { Transaction, ImpactStory, TransactionType } from '@/types';
 import { fetchTransactions, fetchImpactStories } from '@/services/dataService';
 import { Phone, ArrowUp, Globe, Facebook, Linkedin, Instagram } from 'lucide-react';
 import { IEEE_BLUE } from '@/constants';
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 // RouteHandler to manage Scroll-to-Top, Reveal Animations, and Legacy Hash Redirects
 const RouteHandler = () => {
@@ -221,8 +223,8 @@ function App() {
               <Route path="/operational-framework" element={<OperationalFramework />} />
               <Route path="/volunteers" element={<Volunteers />} />
               
-              {/* Catch-all */}
-              <Route path="*" element={<Navigate to="/" replace />} />
+              {/* Catch-all: Render Home instead of redirecting to handle subpaths/previews gracefully */}
+              <Route path="*" element={<Home stories={stories} transactions={transactions} summary={summary} />} />
             </Routes>
           </main>
           
@@ -281,6 +283,8 @@ function App() {
           </button>
         )}
       </div>
+      <Analytics />
+      <SpeedInsights />
     </Router>
   );
 }

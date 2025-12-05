@@ -9,7 +9,7 @@ const __dirname = path.dirname(__filename);
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  // IMPORTANT: Set base to '/' for Vercel/Root deployment with BrowserRouter
+  // Set base to '/' for proper Vercel routing (avoids relative path issues in sub-routes)
   base: '/',
   resolve: {
     alias: {
