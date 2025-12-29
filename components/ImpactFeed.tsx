@@ -328,13 +328,13 @@ export const ImpactFeed: React.FC<Props> = React.memo(({ stories, forceExpanded 
             {!forceExpanded ? (
                 // Carousel Mode
                 <div 
-                    className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-8 no-scrollbar -mx-4 px-4"
+                    className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-8 no-scrollbar -mx-4 px-4 items-stretch"
                     ref={scrollContainerRef}
                     onTouchStart={() => setIsPaused(true)}
                     onTouchEnd={() => setTimeout(() => setIsPaused(false), 3000)}
                 >
                     {sortedStories.slice(0, 5).map((story, index) => (
-                        <div key={story.id} className="min-w-[85vw] snap-center h-full">
+                        <div key={story.id} className="min-w-[85vw] snap-center flex flex-col">
                             <StoryCard story={story} index={index} />
                         </div>
                     ))}
