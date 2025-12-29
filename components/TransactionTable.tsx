@@ -147,26 +147,30 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
 
         {/* Table Container - Filled White Background */}
         <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-gray-100 dark:border-slate-800 overflow-hidden">
-          <div className="overflow-x-auto">
-            {/* table-fixed and explicit percentage widths ensure stability when switching tabs */}
-            <table className="w-full text-sm text-left table-fixed min-w-[800px]">
+          <div className="overflow-x-auto custom-scrollbar">
+            {/* 
+                INCREASED min-w from 800px to 1100px to prevent shrinking on mobile.
+                Reduced padding from px-6 to px-4 to maximize data density.
+            */}
+            <table className="w-full text-sm text-left table-fixed min-w-[1100px]">
               <thead className="text-xs text-gray-500 dark:text-gray-400 uppercase bg-gray-50/80 dark:bg-slate-800/80 border-b border-gray-100 dark:border-slate-800 backdrop-blur-sm">
                 <tr>
-                  <th className="px-6 py-5 font-bold tracking-wider w-[15%]">Date</th>
-                  <th className="px-6 py-5 font-bold tracking-wider w-[40%]">Description</th>
-                  <th className="px-6 py-5 font-bold tracking-wider w-[15%]">Category</th>
-                  <th className="px-6 py-5 font-bold tracking-wider text-right w-[15%]">Amount (LKR)</th>
-                  <th className="px-6 py-5 font-bold tracking-wider text-center w-[15%]">Proof</th>
+                  <th className="px-4 py-5 font-bold tracking-wider w-[12%]">Date</th>
+                  <th className="px-4 py-5 font-bold tracking-wider w-[43%]">Description</th>
+                  <th className="px-4 py-5 font-bold tracking-wider w-[15%]">Category</th>
+                  <th className="px-4 py-5 font-bold tracking-wider text-right w-[15%]">Amount (LKR)</th>
+                  <th className="px-4 py-5 font-bold tracking-wider text-center w-[15%]">Proof</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-slate-800">
                 {paginatedData.map((t) => (
                   <tr key={t.id} className="hover:bg-blue-50/30 dark:hover:bg-slate-800/30 transition-colors group">
-                    <td className="px-6 py-5 text-gray-500 dark:text-gray-400 whitespace-nowrap font-mono text-xs truncate">
+                    {/* Removed truncate to ensure full date visibility, whitespace-nowrap keeps it single line */}
+                    <td className="px-4 py-5 text-gray-500 dark:text-gray-400 whitespace-nowrap font-mono text-xs">
                       {new Date(t.date).toISOString().split('T')[0]}
                     </td>
                     
-                    <td className="px-6 py-5">
+                    <td className="px-4 py-5">
                         <div className="flex items-start gap-3">
                             <div className={`mt-0.5 p-1.5 rounded-full flex-shrink-0 ${
                                 t.type === TransactionType.CREDIT 
@@ -178,25 +182,26 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
                                     : <ArrowUpRight className="w-3 h-3" />
                                 }
                             </div>
-                            <span className="font-medium text-gray-900 dark:text-white leading-relaxed line-clamp-2" title={t.description}>
+                            {/* Relaxed line-clamp to 3 lines for better mobile readability */}
+                            <span className="font-medium text-gray-900 dark:text-white leading-relaxed line-clamp-3" title={t.description}>
                                 {t.description}
                             </span>
                         </div>
                     </td>
 
-                    <td className="px-6 py-5">
+                    <td className="px-4 py-5">
                       <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border whitespace-nowrap ${getCategoryStyle(t.category)}`}>
                         {t.category}
                       </span>
                     </td>
 
-                    <td className={`px-6 py-5 text-right font-mono font-bold whitespace-nowrap ${
+                    <td className={`px-4 py-5 text-right font-mono font-bold whitespace-nowrap ${
                       t.type === TransactionType.CREDIT ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                     }`}>
                       {t.type === TransactionType.CREDIT ? '+' : '-'} {t.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </td>
 
-                    <td className="px-6 py-5 text-center">
+                    <td className="px-4 py-5 text-center">
                       {t.proofLink ? (
                         <a 
                           href={t.proofLink} 
