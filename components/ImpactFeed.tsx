@@ -334,21 +334,22 @@ export const ImpactFeed: React.FC<Props> = React.memo(({ stories, forceExpanded 
                     onTouchEnd={() => setTimeout(() => setIsPaused(false), 3000)}
                 >
                     {sortedStories.slice(0, 5).map((story, index) => (
-                        <div key={story.id} className="min-w-[85vw] snap-center flex flex-col">
+                        <div key={story.id} className="min-w-[85vw] snap-center flex flex-col h-full">
                             <StoryCard story={story} index={index} />
                         </div>
                     ))}
                     
                     {sortedStories.length > 5 && (
-                        <div className="min-w-[50vw] snap-center h-full flex items-center">
+                        <div className="min-w-[85vw] snap-center flex flex-col h-full">
                             <Link
                                 to="/impact"
-                                className="w-full h-[300px] rounded-3xl bg-white/50 dark:bg-slate-800/50 border-2 border-dashed border-gray-300 dark:border-slate-700 flex flex-col items-center justify-center text-center p-6"
+                                className="w-full h-full rounded-3xl bg-white/50 dark:bg-slate-800/50 border-2 border-dashed border-gray-300 dark:border-slate-700 flex flex-col items-center justify-center text-center p-6 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
                             >
-                                <div className="w-12 h-12 rounded-full bg-[#00629B]/10 flex items-center justify-center mb-4">
-                                    <ArrowRight className="w-6 h-6 text-[#00629B]" />
+                                <div className="w-16 h-16 rounded-full bg-[#00629B]/10 flex items-center justify-center mb-4">
+                                    <ArrowRight className="w-8 h-8 text-[#00629B]" />
                                 </div>
-                                <span className="font-bold text-[#00629B]">View All Updates</span>
+                                <span className="font-bold text-[#00629B] text-lg">View All Updates</span>
+                                <span className="text-sm text-gray-500 mt-2">Browse the full archive</span>
                             </Link>
                         </div>
                     )}
