@@ -87,22 +87,42 @@ export const ImpactMap: React.FC<ImpactMapProps> = ({ stories, className = "" })
 
   return (
     <div className={`w-full h-full relative flex flex-col items-center justify-center p-4 ${className}`}>
+      <style>
+        {`
+          @keyframes subtle-ripple {
+            0% {
+              transform: scale(1);
+              opacity: 0.5;
+            }
+            100% {
+              transform: scale(2.5);
+              opacity: 0;
+            }
+          }
+          .animate-subtle-ripple {
+            animation: subtle-ripple 3s cubic-bezier(0, 0, 0.2, 1) infinite;
+            transform-origin: center; 
+            transform-box: fill-box;
+          }
+        `}
+      </style>
       <div className="relative w-full h-full flex items-center justify-center">
         <div className="w-full h-full flex items-center justify-center">
           <svg
             viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-            className="max-h-full w-auto drop-shadow-2xl overflow-visible"
-            style={{ filter: "drop-shadow(0px 10px 20px rgba(0,0,0,0.15))" }}
+            className="max-h-full w-auto overflow-visible"
+            style={{ filter: "drop-shadow(0px 10px 20px rgba(0,0,0,0.1))" }}
             xmlns="http://www.w3.org/2000/svg"
             preserveAspectRatio="xMidYMid meet"
           >
             {/* MAP LAYER */}
-            <g className="fill-white dark:fill-slate-800 stroke-gray-300 dark:stroke-slate-600 stroke-[1]">
+            {/* Darker fill for visibility against white/light backgrounds, cleaner strokes */}
+            <g className="fill-gray-200 dark:fill-slate-800/80 stroke-white dark:stroke-slate-900 stroke-[1.5]">
               {(lkGeo as any).features?.map((feature: any, i: number) => (
                 <path
                   key={i}
                   d={pathGenerator(feature) || undefined}
-                  className="transition-colors hover:fill-blue-50 dark:hover:fill-slate-700"
+                  className="transition-colors hover:fill-gray-300 dark:hover:fill-slate-700"
                 />
               ))}
             </g>
@@ -119,24 +139,23 @@ export const ImpactMap: React.FC<ImpactMapProps> = ({ stories, className = "" })
                   onMouseLeave={() => setHoveredStory(null)}
                   onClick={() => navigate(`/impact/${story.slug}`)}
                 >
-                  {/* Subtle Radar Ripple Effect (Small Size) */}
+                  {/* Subtle Radar Ripple Effect (Red) */}
                   <circle
                     cx={(story as any).cx}
                     cy={(story as any).cy}
-                    r={3}
-                    className="fill-[#00629B] animate-ping opacity-20 origin-center pointer-events-none"
-                    style={{ animationDuration: "2.5s" }}
+                    r={6}
+                    className="fill-red-500 animate-subtle-ripple opacity-40 pointer-events-none"
                   />
 
-                  {/* Main Pin Point */}
+                  {/* Main Pin Point (Red) */}
                   <circle
                     cx={(story as any).cx}
                     cy={(story as any).cy}
-                    r={isHovered ? 8 : 4}
+                    r={isHovered ? 6 : 4}
                     className={`transition-all duration-300 drop-shadow-sm ${
                       isHovered
-                        ? "fill-[#00629B] dark:fill-blue-400 stroke-white dark:stroke-slate-900 stroke-2"
-                        : "fill-[#00629B] stroke-white stroke-[1.5px]"
+                        ? "fill-red-600 stroke-white dark:stroke-slate-900 stroke-2"
+                        : "fill-red-500 stroke-white stroke-[1.5px]"
                     }`}
                   />
 
@@ -164,7 +183,7 @@ export const ImpactMap: React.FC<ImpactMapProps> = ({ stories, className = "" })
           <div className="absolute bottom-4 left-4 right-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-xl shadow-2xl border border-gray-100 dark:border-slate-700 p-4 z-30 pointer-events-none animate-in slide-in-from-bottom-2 fade-in">
             <div className="flex items-start justify-between">
               <div>
-                <div className="flex items-center gap-2 mb-1 text-[10px] font-bold text-[#00629B] dark:text-blue-400 uppercase tracking-widest">
+                <div className="flex items-center gap-2 mb-1 text-[10px] font-bold text-red-600 dark:text-red-400 uppercase tracking-widest">
                   <MapPin className="w-3 h-3" />
                   {hoveredStory.location}
                 </div>
